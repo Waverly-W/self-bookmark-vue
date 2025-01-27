@@ -1,15 +1,17 @@
 <script setup lang="ts">
+import { onMounted } from 'vue';
 import { RouterView } from "vue-router";
+import { useTheme } from './hooks/useTheme';
+
+const { initTheme } = useTheme();
+
+onMounted(() => {
+  initTheme();
+});
 </script>
 
 <template>
   <div class="app-container">
-    <header>
-      <nav>
-        <router-link to="/">首页</router-link>
-        <router-link to="/settings">设置</router-link>
-      </nav>
-    </header>
     <RouterView />
   </div>
 </template>

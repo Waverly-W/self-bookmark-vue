@@ -9,8 +9,9 @@ export interface BookmarkItem {
 }
 
 export interface BookmarkFolder {
+  id: string;
   title: string;
-  add_date: string | null;
+  add_date?: string;
   folders: BookmarkFolder[];
   bookmarks: BookmarkItem[];
 }
@@ -52,8 +53,9 @@ export function parseBookmarks(html: string): BookmarkRoot {
         const folderContent = dl ? processNode(dl) : { folders: [], bookmarks: [] };
 
         result.folders.push({
+          id: h3.getAttribute("id") || "",
           title: h3.textContent?.trim() || "",
-          add_date: h3.getAttribute("add_date") || null,
+          add_date: h3.getAttribute("add_date") || undefined,
           folders: folderContent.folders,
           bookmarks: folderContent.bookmarks,
         });

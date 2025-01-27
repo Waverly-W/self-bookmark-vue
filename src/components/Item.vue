@@ -1,6 +1,7 @@
 <template>
   <div class="bookmark-wrapper" :style="wrapperStyle">
     <d-card
+      v-ripple="rippleConfig"
       class="bookmark-card"
       :style="cardStyle"
       :class="{ clickable: !!url }"
@@ -152,12 +153,19 @@ export default defineComponent({
       return (props.iconSize * settings.value.iconImageSize) / 100;
     });
 
+    const rippleConfig = computed(() => ({
+      duration: 300,
+      color: '#00000030',
+      disabled: !props.url
+    }));
+
     return {
       showCustomIcon,
       handleIconError,
       iconWrapperStyle,
       iconImageStyle,
       avatarSize,
+      rippleConfig,
     };
   },
   computed: {

@@ -76,8 +76,9 @@ async function getBookmarksFromChrome(): Promise<BookmarkRoot> {
           };
         } else {
           return {
+            id: node.id,
             title: node.title,
-            add_date: node.dateAdded?.toString() || null,
+            add_date: node.dateAdded?.toString() || undefined,
             folders: node.children
               ?.filter(child => !child.url)
               .map(child => convertNode(child) as BookmarkFolder) || [],

@@ -171,12 +171,13 @@ onUnmounted(() => {
   top: 0;
   bottom: 0;
   right: 0;
-  background-color: var(--devui-base-bg, #fff);
   box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
   transition: transform 0.3s ease;
+  transform: translateX(100%);
+  height: 100%;
   display: flex;
   flex-direction: column;
-  transform: translateX(100%);
+  background-color: #fff;
 }
 
 .drawer-open .drawer-content {
@@ -214,6 +215,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  background-color: #fff;
 }
 
 .drawer-title {
@@ -242,5 +244,12 @@ onUnmounted(() => {
   flex: 1;
   overflow-y: auto;
   padding: 24px;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+:deep(.devui-drawer-content) {
+  background-color: #fff;
 }
 </style>

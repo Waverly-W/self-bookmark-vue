@@ -1,22 +1,20 @@
 <template>
   <div class="folder-wrapper" :style="wrapperStyle">
     <d-card
+      v-ripple="rippleConfig"
       class="folder-card"
       :style="cardStyle"
       :class="{ clickable: !!onClick }"
       @click="handleClick"
     >
       <div class="folder-content">
-        <d-avatar
-          :style="iconStyle"
-          :width="iconSize"
-          :height="iconSize"
-          :backgroundColor="folderColor"
-        >
-          <template #avatar>
-            <i class="icon-folder"></i>
-          </template>
-        </d-avatar>
+        <div class="folder-icon-wrapper" :style="iconWrapperStyle">
+          <d-icon 
+            name="folder" 
+            :size="`${iconSize}px`"
+            :color="folderColor"
+          />
+        </div>
         <div class="folder-info">
           <span class="folder-title" :style="titleStyle">
             {{ folderName }}
@@ -29,7 +27,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { defineComponent, computed } from "vue";
 import type { PropType } from "vue";
 
 export default defineComponent({
@@ -90,6 +88,26 @@ export default defineComponent({
       type: Function as PropType<(event: MouseEvent) => void>,
       default: null,
     },
+  },
+  setup(props) {
+    const rippleConfig = computed(() => ({
+      duration: 300,
+      color: '#00000030',
+      disabled: !props.onClick
+    }));
+
+    const iconWrapperStyle = computed(() => ({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: `${props.iconSize}px`,
+      height: `${props.iconSize}px`,
+    }));
+
+    return {
+      rippleConfig,
+      iconWrapperStyle
+    };
   },
   computed: {
     wrapperStyle() {
@@ -176,14 +194,10 @@ export default defineComponent({
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.icon-folder {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  background: currentColor;
-  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M20 5h-8.586L9.707 3.293A.997.997 0 0 0 9 3H4c-1.103 0-2 .897-2 2v14c0 1.103.897 2 2 2h16c1.103 0 2-.897 2-2V7c0-1.103-.897-2-2-2z'/%3E%3C/svg%3E")
-    center/contain no-repeat;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M20 5h-8.586L9.707 3.293A.997.997 0 0 0 9 3H4c-1.103 0-2 .897-2 2v14c0 1.103.897 2 2 2h16c1.103 0 2-.897 2-2V7c0-1.103-.897-2-2-2z'/%3E%3C/svg%3E")
-    center/contain no-repeat;
+.folder-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 </style>

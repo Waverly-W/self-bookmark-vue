@@ -7,6 +7,7 @@ export interface BookmarkSettings {
   folderFixedWidth: boolean;
   folderWidth: number;
   folderShowCount: boolean;
+  folderIconColor: string;
   
   // 书签设置
   bookmarkIconSize: number;
@@ -34,6 +35,7 @@ const defaultSettings: BookmarkSettings = {
   folderFixedWidth: false,
   folderWidth: 200,
   folderShowCount: true,
+  folderIconColor: '#4B5CC4',
   
   // 书签设置
   bookmarkIconSize: 24,

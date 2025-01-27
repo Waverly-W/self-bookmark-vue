@@ -54,6 +54,9 @@ const { settings } = useBookmarkSettings();
 const settingsVisible = ref(false);
 const router = useRouter();
 
+// 在 script setup 中添加
+const rootFolderId = ref('root');
+
 // 将书签数据转换为显示格式
 function convertBookmarkToDisplay(bookmark: any): BookmarkDisplay {
   return {
@@ -81,7 +84,7 @@ function convertFolderToDisplay(folder: BookmarkFolder): FolderDisplay {
     fontSize: settings.value.folderFontSize,
     padding: `${settings.value.itemPadding}px`,
     margin: `${settings.value.itemMargin}px`,
-    color: "#4B5CC4",
+    color: settings.value.folderIconColor,
     fixedWidth: settings.value.folderFixedWidth,
     width: `${settings.value.folderWidth}px`,
     showItemCount: settings.value.folderShowCount,
@@ -96,16 +99,34 @@ function getCurrentFolder(): BookmarkFolder | null {
 
 // 更新当前视图
 function updateCurrentView() {
+  console.log('更新视图，当前根目录:', rootFolderId.value);
   const current = getCurrentFolder();
   if (!current) {
-    // 根目录
-    const rootData = bookmarkData.value?.roots;
-    if (rootData) {
-      bookmarks.value = rootData.bookmarks.map(convertBookmarkToDisplay);
-      folders.value = rootData.folders.map(convertFolderToDisplay);
+    if (rootFolderId.value === 'root') {
+      console.log('显示默认根目录');
+      const rootData = bookmarkData.value?.roots;
+      if (rootData) {
+        bookmarks.value = rootData.bookmarks.map(convertBookmarkToDisplay);
+        folders.value = rootData.folders.map(convertFolderToDisplay);
+      }
+    } else {
+      console.log('查找自定义根目录:', rootFolderId.value);
+      const customRoot = findFolderById(bookmarkData.value?.roots, rootFolderId.value);
+      console.log('找到的自定义根目录:', customRoot);
+      if (customRoot) {
+        bookmarks.value = customRoot.bookmarks.map(convertBookmarkToDisplay);
+        folders.value = customRoot.folders.map(convertFolderToDisplay);
+      } else {
+        console.warn('未找到指定的根目录，使用默认根目录');
+        const rootData = bookmarkData.value?.roots;
+        if (rootData) {
+          bookmarks.value = rootData.bookmarks.map(convertBookmarkToDisplay);
+          folders.value = rootData.folders.map(convertFolderToDisplay);
+        }
+      }
     }
   } else {
-    // 文件夹内
+    // 文件夹内部逻辑保持不变
     bookmarks.value = current.bookmarks.map(convertBookmarkToDisplay);
     folders.value = current.folders.map(convertFolderToDisplay);
   }
@@ -165,12 +186,40 @@ const handleClose = () => {
 };
 
 // 处理设置保存
-const handleSettingsSave = () => {
+const handleSettingsSave = (settings: any) => {
+  console.log('接收到设置更新:', settings);
   settingsVisible.value = false;
   router.push({ name: "home" });
-  // 重新加载书签视图以应用新设置
-  updateCurrentView();
+  
+  // 更新根目录设置
+  if (settings.rootFolderId !== undefined) {
+    console.log('更新根目录为:', settings.rootFolderId);
+    rootFolderId.value = settings.rootFolderId;
+    // 重置当前路径
+    currentPath.value = [];
+    // 立即更新视图
+    updateCurrentView();
+  }
+
+  // 更新其他设置
+  Object.assign(settings.value, settings);
 };
+
+// 修改函数签名，直接使用 roots 属性
+function findFolderById(root: BookmarkRoot['roots'] | undefined, id: string): BookmarkFolder | null {
+  if (!root) return null;
+  
+  function search(folders: BookmarkFolder[]): BookmarkFolder | null {
+    for (const folder of folders) {
+      if (folder.id === id) return folder;
+      const found = search(folder.folders);
+      if (found) return found;
+    }
+    return null;
+  }
+  
+  return search(root.folders);
+}
 
 // 组件挂载时加载书签
 onMounted(() => {
@@ -181,13 +230,15 @@ onMounted(() => {
 <template>
   <main class="home-container">
     <div class="navigation">
-      <button
+      <d-icon
         class="back-button"
         @click="handleBack"
         :disabled="currentPath.length === 0"
-      >
-        返回上级
-      </button>
+        name="arrow-left-l"
+        title="返回上级"
+        size="16px"
+        operable
+      />
       <d-breadcrumb separator-icon="/">
         <d-breadcrumb-item
           :noNavigation="false"
@@ -209,14 +260,16 @@ onMounted(() => {
           </d-breadcrumb-item>
         </template>
       </d-breadcrumb>
-      <d-button
-        variant="text"
+      <d-icon
+        name="setting"
         class="settings-button"
         @click="showSettings"
-        icon="settings"
+        operable
       >
-        设置
-      </d-button>
+        <template #suffix>
+          <span>设置</span>
+        </template>
+      </d-icon>
     </div>
 
     <div class="content">
@@ -259,7 +312,11 @@ onMounted(() => {
       :close-on-click-overlay="true"
       @close="handleClose"
     >
-      <SettingsView @save="handleSettingsSave" @close="settingsVisible = false" />
+      <SettingsView 
+        @save="handleSettingsSave" 
+        @close="settingsVisible = false" 
+        :bookmarkData="bookmarkData"
+      />
     </ResizableDrawer>
   </main>
 </template>
@@ -277,33 +334,37 @@ onMounted(() => {
 }
 
 .back-button {
-  padding: 8px 16px;
-  background-color: #4b5cc4;
-  color: white;
-  border: none;
-  border-radius: 4px;
+  color: #4b5cc4;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all 0.3s;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  height: 24px;
 }
 
-.back-button:hover:not(:disabled) {
-  background-color: #3b4ba4;
+.back-button:hover:not([disabled]) {
+  color: #3b4ba4;
+  transform: translateX(-2px);
 }
 
-.back-button:disabled {
-  background-color: #ccc;
+.back-button[disabled] {
+  color: #ccc;
   cursor: not-allowed;
 }
 
 :deep(.devui-breadcrumb) {
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: center;
 }
 
 :deep(.devui-breadcrumb-item) {
   color: #666;
   font-size: 14px;
+  display: flex;
+  align-items: center;
 }
 
 :deep(.devui-breadcrumb-item:last-child) {
@@ -351,8 +412,22 @@ h3 {
 }
 
 .settings-button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   margin-left: auto;
   color: #4b5cc4;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 16px;
+}
+
+.settings-button:hover {
+  color: #3b4ba4;
+}
+
+.settings-button span {
+  font-size: 14px;
 }
 
 /* 添加抽屉板样式覆盖 */
@@ -363,5 +438,10 @@ h3 {
 :deep(.devui-drawer-content) {
   width: 100% !important;
   max-width: 2000px !important;
+}
+
+:deep(.devui-breadcrumb-separator) {
+  display: flex;
+  align-items: center;
 }
 </style>
